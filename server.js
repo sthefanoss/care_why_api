@@ -11,6 +11,10 @@ app.use(bodyParser.json());
 app.use((req, res, next) => {
   if(req.url == '/') {
     res.redirect('http://app.carewhyapp.kinghost.net/');
+    return;s
+  }
+  if(req.url == '/pudim') {
+    res.redirect('http://http://pudim.com.br/');
     return;
   }
   next();
