@@ -106,7 +106,10 @@ app.post('/lups', upload.single('image'), (req, res) => {
   let token = data.token;
   if(data.title == null) return res.status(400).send('title is required');
   if(data.description == null) return res.status(400).send('description is required');
-  
+  if(req.file) {
+    const pathName = req.file.path;
+    res.send(req.file, pathName);
+  }
   let newLup = {
     authorId: token,
     id: new Date().getTime(),
