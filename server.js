@@ -101,7 +101,7 @@ app.post('/users', (req, res) => {
   res.json(newUser);
 });
 
-app.post('/lups', (req, res) => {
+app.post('/lups', upload.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
   if(data.title == null) return res.status(400).send('title is required');
