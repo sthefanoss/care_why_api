@@ -2,7 +2,33 @@ const express = require('express');
 //const cors = require('cors');
 const bodyParser = require("body-parser");
 const app = express();
+const multer = require("multer");
 const port = 21147;
+
+app.use(express.static('public'));
+
+const fileFilter = (req, file, cb) => {
+  let mimeType = file.mimeType;
+  if(mimeType === 'image/jpeg' || mimeType === 'image/jpg' || mimeType === 'image/png'){
+      cb(null, true);
+  } else {
+      cb(null, false);
+  }
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + file.originalname);
+  },
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+});
 
 //app.use(cors({origin: '*'}));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -99,6 +125,12 @@ app.post('/lups', (req, res) => {
   });
 })
 
+app.post('/image',upload.single('image'), async (req, res) => {
+  if(req.file) {
+      const pathName = req.file.path;
+      res.send(req.file, pathName);
+  }
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
