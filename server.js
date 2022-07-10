@@ -16,19 +16,19 @@ const fileFilter = (req, file, cb) => {
   }
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + file.originalname);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, './public/uploads/');
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + file.originalname);
+//   },
+// });
 
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-});
+// const upload = multer({
+//     storage: storage,
+//     fileFilter: fileFilter,
+// });
 
 //app.use(cors({origin: '*'}));
 app.use(bodyParser.urlencoded({ extended: false }));
