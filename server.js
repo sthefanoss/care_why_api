@@ -14,7 +14,7 @@ app.use((req, res, next) => {
     return;s
   }
   if(req.url == '/pudim') {
-    res.redirect('http://http://pudim.com.br/');
+    res.redirect('http://pudim.com.br/');
     return;
   }
   next();
