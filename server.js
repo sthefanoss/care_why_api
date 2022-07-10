@@ -5,7 +5,7 @@ const app = express();
 const multer = require("multer");
 const port = 21147;
 
-app.use(express.static('public'));
+// app.use(express.static('public'));
 
 const fileFilter = (req, file, cb) => {
   let mimeType = file.mimeType;
@@ -125,12 +125,12 @@ app.post('/lups', (req, res) => {
   });
 })
 
-app.post('/image',upload.single('image'), async (req, res) => {
-  if(req.file) {
-      const pathName = req.file.path;
-      res.send(req.file, pathName);
-  }
-});
+// app.post('/image',upload.single('image'), async (req, res) => {
+//   if(req.file) {
+//       const pathName = req.file.path;
+//       res.send(req.file, pathName);
+//   }
+// });
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
