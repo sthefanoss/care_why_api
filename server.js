@@ -1,38 +1,28 @@
 const express = require('express');
-//const cors = require('cors');
+const multer = require("multer");
 const bodyParser = require("body-parser");
 const app = express();
-const multer = require("multer");
 const port = 21147;
 
 app.use(express.static('public'));
-
-const fileFilter = (req, file, cb) => {
-  let mimeType = file.mimeType;
-  if(mimeType === 'image/jpeg' || mimeType === 'image/jpg' || mimeType === 'image/png'){
-      cb(null, true);
-  } else {
-      cb(null, false);
-  }
-}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, './public/uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + file.originalname);
+    cb(null, Date.now().toString());
   },
 });
 
 const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
+    // storage: storage
+    dest: 'public/',
 });
 
-//app.use(cors({origin: '*'}));
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 app.use((req, res, next) => {
   if(req.url == '/') {
@@ -104,36 +94,25 @@ app.post('/users', (req, res) => {
 app.post('/lups', upload.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
-  if(data.title == null) return res.status(400).send('title is required');
-  if(data.description == null) return res.status(400).send('description is required');
-  if(req.file) {
-    const pathName = req.file.path;
-    res.send(req.file, pathName);
-  }
+
   let newLup = {
     authorId: token,
     id: new Date().getTime(),
     title: data.title,
     description: data.description,
-    collaboratorIds: data.collaboratorIds || []
+    collaboratorIds: data.collaboratorIds || [],
+    imageUrl: req.file.path,
   };
-  
   lups.push(newLup);
   res.json({
     author: users.find(user => user.id == token),
     id: newLup.id,
     title: newLup.title,
     description: newLup.description,
-    collaborators: newLup.collaboratorIds.map(id => { return users.find(user => user.id == id);})
+    collaborators: newLup.collaboratorIds.map(id => { return users.find(user => user.id == id);}),
+    imageUrl: req.file.path,
   });
 })
-
-app.post('/image',upload.single('image'), async (req, res) => {
-  if(req.file) {
-      const pathName = req.file.path;
-      res.send(req.file, pathName);
-  }
-});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
