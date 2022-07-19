@@ -62,7 +62,7 @@ app.get('/users', (req, res) => {
   let data = req.query; 
   let token = data.token;
   if(token == null) {
-    res.json(users);
+    return res.json(users);
   }
   res.json(users.filter(user => user.id != token));
 })
@@ -86,7 +86,7 @@ app.post('/users', upload.single('image'), (req, res) => {
   let newUser = {
     id: new Date().getTime(),
     name: user.name,
-    imageUri: url +  req.file.path,
+    imageUri: url + req.file.path,
   };
 
   users.push(newUser);
