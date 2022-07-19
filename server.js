@@ -60,8 +60,6 @@ app.get('/lups', (req, res) => {
 
 app.get('/users', (req, res) => {
   let token = req.query.token;
-  res.json(users);
-  return;
   if(token == null) {
     res.json(users);
   } else {
