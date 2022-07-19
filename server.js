@@ -58,7 +58,7 @@ app.get('/lups', (req, res) => {
       description: lup.description,
       title: lup.title,
       author: findUserById(lup.author),
-      collaborators: collaboratorIds.map(findUserById),
+      collaborators: lup.collaboratorIds.map(findUserById),
       imageUrl: lup.imageUrl,
     };
   }));
