@@ -6,6 +6,12 @@ const port = 21147;
 
 const url = 'http://carewhyapp.kinghost.net/';
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.use("/public", express.static(__dirname + "/public"));
 
 const storage = multer.diskStorage({
@@ -34,12 +40,6 @@ app.use((req, res, next) => {
     res.redirect('http://pudim.com.br/');
     return;
   }
-  next();
-});
-
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
