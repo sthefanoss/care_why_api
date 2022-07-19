@@ -56,7 +56,11 @@ app.get('/lups', (req, res) => {
   
   res.json(lups.map( lup => { 
     lup.author = findUserById(lup.authorId);
-    lup.collaborators = lup.collaboratorIds.map(findUserById);
+    if(lup.collaboratorIds == undefined) {
+      lup.collaborators = [];  
+    } else {
+      lup.collaborators = lup.collaboratorIds.map(findUserById);
+    }
     delete lup.authorId; delete lup.collaboratorIds;
     return lup;
   }));
