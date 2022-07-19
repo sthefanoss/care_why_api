@@ -52,13 +52,11 @@ const findUserById = (id) => {
 };
 
 app.get('/lups', (req, res) => {
-  res.json(lups.map( lup => { return {
-    author: findUserById(lup.authorId),
-    id: lup.id,
-    title: lup.title,
-    description: lup.description,
-    collaborators: lup.collaboratorIds.map(findUserById)    
-   };
+  res.json(lups.map( lup => { 
+    lup.author = findUserById(lup.authorId);
+    lup.collaborators = lup.collaboratorIds.map(findUserById);
+    delete lup.authorId; delete lup.collaboratorIds;
+    return lup;
   }));
 })
 
