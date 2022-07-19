@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = 21147;
 
-const url = 'http://carewhyapp.kinghost.net/public/';
+const url = 'http://carewhyapp.kinghost.net/';
 
 app.use(express.static('public'));
 
