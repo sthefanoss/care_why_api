@@ -94,7 +94,8 @@ app.post('/users', (req, res) => {
 app.post('/lups', upload.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
-  console.log(req);
+  let file = req.file;
+  console.log(file);
   let newLup = {
     authorId: token,
     id: new Date().getTime(),
