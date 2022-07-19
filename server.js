@@ -101,13 +101,18 @@ app.post('/lups', upload.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
   let file = req.file;
-  console.log(file);
+  if(data.collaboratorIds == undefined) {
+    collaboratorIds = [];
+  }
+  else {
+    collaboratorIds = data.collaboratorIds;
+  }
   let newLup = {
     authorId: token,
     id: new Date().getTime(),
     title: data.title,
     description: data.description,
-    collaboratorIds: data.collaboratorIds || [],
+    collaboratorIds: collaboratorIds,
     imageUrl: url + file.path,
   };
   lups.push(newLup);
