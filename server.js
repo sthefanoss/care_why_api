@@ -52,6 +52,8 @@ const findUserById = (id) => {
 };
 
 app.get('/lups', (req, res) => {
+  if (lups.length == 0) return res.json([]);
+  
   res.json(lups.map( lup => { 
     lup.author = findUserById(lup.authorId);
     lup.collaborators = lup.collaboratorIds.map(findUserById);
