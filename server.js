@@ -8,8 +8,18 @@ const url = 'http://carewhyapp.kinghost.net/';
 
 app.use(express.static('public'));
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now().toString() + '.jpg');
+  },
+});
 
-const upload = multer({dest: 'public/'});
+const upload = multer({
+    storage: storage
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -76,7 +86,7 @@ app.post('/users', upload.single('image'), (req, res) => {
   let newUser = {
     id: new Date().getTime(),
     name: user.name,
-    imageUri: url + file.path,
+    imageUri: url +  req.file.path,
   };
 
   users.push(newUser);
