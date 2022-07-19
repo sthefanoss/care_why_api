@@ -52,17 +52,15 @@ const findUserById = (id) => {
 };
 
 app.get('/lups', (req, res) => {
-  if (lups.length == 0) return res.json([]);
-  
-  res.json(lups.map( lup => { 
-    lup.author = findUserById(lup.authorId);
-    if(lup.collaboratorIds == undefined) {
-      lup.collaborators = [];  
-    } else {
-      lup.collaborators = lup.collaboratorIds.map(findUserById);
-    }
-    delete lup.authorId; delete lup.collaboratorIds;
-    return lup;
+  res.json(lups.map( lup => {
+    return {
+      id: lup.id,
+      description: lup.description,
+      title: lup.title,
+      author: findUserById(lup.author),
+      collaborators: collaboratorIds.map(findUserById),
+      imageUrl: lup.imageUrl,
+    };
   }));
 })
 
@@ -105,18 +103,12 @@ app.post('/lups', upload.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
   let file = req.file;
-  if(data.collaboratorIds == undefined) {
-    collaboratorIds = [];
-  }
-  else {
-    collaboratorIds = data.collaboratorIds;
-  }
   let newLup = {
     authorId: token,
     id: new Date().getTime(),
     title: data.title,
     description: data.description,
-    collaboratorIds: collaboratorIds,
+    collaboratorIds: data.collaboratorIds || [],
     imageUrl: url + file.path,
   };
   lups.push(newLup);
