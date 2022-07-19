@@ -108,7 +108,7 @@ app.post('/lups', upload.single('image'), (req, res) => {
     title: data.title,
     description: data.description,
     collaboratorIds: data.collaboratorIds || [],
-    imageUrl: url + req.file.path,
+    imageUrl: url + file.path,
   };
   lups.push(newLup);
   res.json({
