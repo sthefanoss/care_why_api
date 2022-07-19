@@ -6,7 +6,7 @@ const port = 21147;
 
 const url = 'http://carewhyapp.kinghost.net/';
 
-app.use('/public', __dirname + express.static('/public'));
+app.use("/public", express.static(__dirname + "/public"));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
