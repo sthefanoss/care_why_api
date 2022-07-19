@@ -90,7 +90,7 @@ app.post('/users', upload.single('image'), (req, res) => {
   let newUser = {
     id: new Date().getTime(),
     name: user.name,
-    imageUri: url + req.file.path,
+    imageUrl: url + req.file.path,
   };
 
   users.push(newUser);
@@ -108,16 +108,16 @@ app.post('/lups', upload.single('image'), (req, res) => {
     title: data.title,
     description: data.description,
     collaboratorIds: data.collaboratorIds || [],
-    imageUrl: req.file.path,
+    imageUrl: url + req.file.path,
   };
   lups.push(newLup);
   res.json({
-    author: findUserById(token),
+    author: findUserById(newLup.authorId),
     id: newLup.id,
     title: newLup.title,
     description: newLup.description,
     collaborators: newLup.collaboratorIds.map(findUserById),
-    imageUrl: req.file.path,
+    imageUrl: newLup.imageUrl,
   });
 })
 
