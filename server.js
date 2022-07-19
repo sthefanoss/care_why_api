@@ -59,12 +59,12 @@ app.get('/lups', (req, res) => {
 })
 
 app.get('/users', (req, res) => {
-  let data = req.query; 
-  let token = data.token;
+  let token = req.query.token;
   if(token == null) {
-    return res.json(users);
+    res.json(users);
+  } else {
+    res.json(users.filter(user => user.id != token));
   }
-  res.json(users.filter(user => user.id != token));
 })
 
 app.get('/users/:id', (req, res) => {
