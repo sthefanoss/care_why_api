@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = 21147;
 
+const url = 'http://carewhyapp.kinghost.net/public/';
+
 app.use(express.static('public'));
 
 const storage = multer.diskStorage({
@@ -75,16 +77,17 @@ app.get('/users/:id', (req, res) => {
   res.json(user);
 })
 
-app.post('/users', (req, res) => {
+app.post('/users', upload.single('image'), (req, res) => {
   let user = req.query;
   // apply validations
+  let file = req.file;
   if(user.name == null) return res.status(400).send('name is required');
-  if(user.imageUri == null) return res.status(400).send('imageUri is required');
+  if(file == null) return res.status(400).send('imageUri is required');
   
   let newUser = {
     id: new Date().getTime(),
     name: user.name,
-    imageUri: user.imageUri,
+    imageUri: url +  req.file.path,
   };
 
   users.push(newUser);
