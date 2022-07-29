@@ -60,9 +60,9 @@ app.use((req, res, next) => {
   next();
 });
 
-const users = [];
+let users = [];
 
-const lups = [];
+let lups = [];
 
 const findUserById = (id) => {
   return users.find(user => user.id == id);
@@ -113,7 +113,7 @@ app.post('/users', upload.single('image'), (req, res) => {
   };
 
   users.push(newUser);
-  saveJson('users.txt',users, () => {
+  saveJson('../database/users.txt',users, () => {
     res.json(newUser);
   });
 });
@@ -131,7 +131,7 @@ app.post('/lups', upload.single('image'), (req, res) => {
     imageUrl: url + file.path,
   };
   lups.push(newLup);
-  saveJson('lups.txt', lups, () => {
+  saveJson('../database/lups.txt', lups, () => {
     res.json({
       author: findUserById(newLup.authorId),
       id: newLup.id,
@@ -144,5 +144,15 @@ app.post('/lups', upload.single('image'), (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  loadJson("../database/lups.txt", (err, data) => {
+    if(data) {
+      lups = data;
+    }
+    loadJson("../database/users.txt", (err, data) => {
+      if(data) {
+        users = data;
+      }
+      console.log(`Example app listening on port ${port}`)
+    })
+  });
 })								
