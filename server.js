@@ -1,8 +1,25 @@
 const express = require('express');
 const multer = require("multer");
 const bodyParser = require("body-parser");
+const fileSystem = require('fs');
 const app = express();
 const port = 21147;
+
+
+const saveJson = (path, json, callback) => {
+  fileSystem.writeFile(path, JSON.stringify(json), callback);
+};
+
+const loadJson = (path, callback) => {
+  fileSystem.readFile(path, (err, data) => {
+    if(err) {
+      callback(err,null);
+    }
+    else {
+      callback(null, JSON.parse(data));
+    }
+  });
+};
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -96,7 +113,9 @@ app.post('/users', upload.single('image'), (req, res) => {
   };
 
   users.push(newUser);
-  res.json(newUser);
+  saveJson('users.txt',users, () => {
+    res.json(newUser);
+  });
 });
 
 app.post('/lups', upload.single('image'), (req, res) => {
@@ -112,13 +131,15 @@ app.post('/lups', upload.single('image'), (req, res) => {
     imageUrl: url + file.path,
   };
   lups.push(newLup);
-  res.json({
-    author: findUserById(newLup.authorId),
-    id: newLup.id,
-    title: newLup.title,
-    description: newLup.description,
-    collaborators: newLup.collaboratorIds.map(findUserById),
-    imageUrl: newLup.imageUrl,
+  saveJson('lups.txt', lups, () => {
+    res.json({
+      author: findUserById(newLup.authorId),
+      id: newLup.id,
+      title: newLup.title,
+      description: newLup.description,
+      collaborators: newLup.collaboratorIds.map(findUserById),
+      imageUrl: newLup.imageUrl,
+    });
   });
 })
 
