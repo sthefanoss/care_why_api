@@ -1,8 +1,25 @@
 const express = require('express');
 const multer = require("multer");
 const bodyParser = require("body-parser");
+const fileSystem = require('fs');
 const app = express();
 const port = 21147;
+
+
+const saveJson = (path, json, callback) => {
+  fileSystem.writeFile(path, JSON.stringify(json), callback);
+};
+
+const loadJson = (path, callback) => {
+  fileSystem.readFile(path, (err, data) => {
+    if(err) {
+      callback(err,null);
+    }
+    else {
+      callback(null, JSON.parse(data));
+    }
+  });
+};
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -43,9 +60,9 @@ app.use((req, res, next) => {
   next();
 });
 
-const users = [];
+let users = [];
 
-const lups = [];
+let lups = [];
 
 const findUserById = (id) => {
   return users.find(user => user.id == id);
@@ -96,7 +113,9 @@ app.post('/users', upload.single('image'), (req, res) => {
   };
 
   users.push(newUser);
-  res.json(newUser);
+  saveJson('../database/users.txt',users, () => {
+    res.json(newUser);
+  });
 });
 
 app.post('/lups', upload.single('image'), (req, res) => {
@@ -112,16 +131,28 @@ app.post('/lups', upload.single('image'), (req, res) => {
     imageUrl: url + file.path,
   };
   lups.push(newLup);
-  res.json({
-    author: findUserById(newLup.authorId),
-    id: newLup.id,
-    title: newLup.title,
-    description: newLup.description,
-    collaborators: newLup.collaboratorIds.map(findUserById),
-    imageUrl: newLup.imageUrl,
+  saveJson('../database/lups.txt', lups, () => {
+    res.json({
+      author: findUserById(newLup.authorId),
+      id: newLup.id,
+      title: newLup.title,
+      description: newLup.description,
+      collaborators: newLup.collaboratorIds.map(findUserById),
+      imageUrl: newLup.imageUrl,
+    });
   });
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  loadJson("../database/lups.txt", (err, data) => {
+    if(data) {
+      lups = data;
+    }
+    loadJson("../database/users.txt", (err, data) => {
+      if(data) {
+        users = data;
+      }
+      console.log(`Example app listening on port ${port}`)
+    })
+  });
 })								
