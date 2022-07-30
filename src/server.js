@@ -53,10 +53,6 @@ app.use((req, res, next) => {
     res.redirect('http://app.carewhyapp.kinghost.net/');
     return;s
   }
-  if(req.url == '/pudim') {
-    res.redirect('http://pudim.com.br/');
-    return;
-  }
   next();
 });
 
