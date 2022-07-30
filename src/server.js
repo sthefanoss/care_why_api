@@ -51,7 +51,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   if(req.url == '/') {
     res.redirect('http://app.carewhyapp.kinghost.net/');
-    return;s
+    return;
   }
   next();
 });
