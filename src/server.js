@@ -97,10 +97,10 @@ app.get('/users/:id', (req, res) => {
 
 app.post('/users', upload.single('image'), (req, res) => {
   let user = req.query;
-  // apply validations
   let file = req.file;
+  // apply validations
   if(user.name == null) return res.status(400).send('name is required');
-  if(file == null) return res.status(400).send('imageUri is required');
+  if(file == null) return res.status(400).send('image is required');
   
   let newUser = {
     id: new Date().getTime(),
