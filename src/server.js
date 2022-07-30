@@ -119,22 +119,37 @@ app.post('/lups', upload.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
   let file = req.file;
+  if(token == null) return res.status(400).send('token is required');
+  let author =  findUserById(token);
+  if(author == null) return res.status(400).send('user not found for given token');
+  if(file == null) return res.status(400).send('image is required');
+  if(data.title == null) return res.status(400).send('title is required');
+  if(data.description == null) return res.status(400).send('description is required');
+  let collaboratorIds = [];
+  let collaborators = [];
+  if(data.collaboratorIds != null) {
+    if(!Array.isArray(data.collaboratorIds)) return res.status(400).send('collaboratorIds must be an array');
+    collaboratorIds = data.collaboratorIds;
+    collaborators = collaboratorIds.map(findUserById);
+    if(collaborators.some((c) => c == null)) return res.status(400).send('collaborator not found');
+  }
+  
   let newLup = {
     authorId: token,
     id: new Date().getTime(),
     title: data.title,
     description: data.description,
-    collaboratorIds: data.collaboratorIds || [],
+    collaboratorIds,
     imageUrl: url + file.path,
   };
   lups.push(newLup);
   saveJson('database/lups.txt', lups, () => {
     res.json({
-      author: findUserById(newLup.authorId),
+      author,
       id: newLup.id,
       title: newLup.title,
       description: newLup.description,
-      collaborators: newLup.collaboratorIds.map(findUserById),
+      collaborators,
       imageUrl: newLup.imageUrl,
     });
   });
