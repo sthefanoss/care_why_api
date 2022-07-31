@@ -1,25 +1,9 @@
 const express = require('express');
 const multer = require("multer");
 const bodyParser = require("body-parser");
-const fileSystem = require('fs');
 const app = express();
 const port = 21147;
-
-
-const saveJson = (path, json, callback) => {
-  fileSystem.writeFile(path, JSON.stringify(json), callback);
-};
-
-const loadJson = (path, callback) => {
-  fileSystem.readFile(path, (err, data) => {
-    if(err) {
-      callback(err,null);
-    }
-    else {
-      callback(null, JSON.parse(data));
-    }
-  });
-};
+const JsonFileSystem = require('./utils/json_file_system');
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -109,7 +93,7 @@ app.post('/users', upload.single('image'), (req, res) => {
   };
 
   users.push(newUser);
-  saveJson('database/users.txt',users, (err) => {
+  JsonFileSystem.save('database/users.txt',users, (err) => {
     res.json(newUser);
     if(err) console.log(err);
   });
@@ -143,7 +127,7 @@ app.post('/lups', upload.single('image'), (req, res) => {
     imageUrl: url + file.path,
   };
   lups.push(newLup);
-  saveJson('database/lups.txt', lups, () => {
+  JsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
       author,
       id: newLup.id,
@@ -156,11 +140,11 @@ app.post('/lups', upload.single('image'), (req, res) => {
 })
 
 app.listen(port, () => {
-  loadJson("database/lups.txt", (err, data) => {
+  JsonFileSystem.load("database/lups.txt", (err, data) => {
     if(data) {
       lups = data;
     }
-    loadJson("database/users.txt", (err, data) => {
+    JsonFileSystem.load("database/users.txt", (err, data) => {
       if(data) {
         users = data;
       }
