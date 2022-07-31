@@ -1,9 +1,10 @@
 const express = require('express');
-const multer = require("multer");
+
 const bodyParser = require("body-parser");
 const app = express();
 const port = 21147;
-const JsonFileSystem = require('./utils/json_file_system');
+const jsonFileSystem = require('./utils/json_file_system');
+const fileStorage = require('./utils/file_storage');
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -14,19 +15,6 @@ app.use((req, res, next) => {
 });
 
 app.use("/upload", express.static(__dirname + "/upload"));
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'upload/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now().toString() + '.jpg');
-  },
-});
-
-const upload = multer({
-    storage: storage
-});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -79,7 +67,7 @@ app.get('/users/:id', (req, res) => {
   res.json(user);
 })
 
-app.post('/users', upload.single('image'), (req, res) => {
+app.post('/users', fileStorage.single('image'), (req, res) => {
   let user = req.query;
   let file = req.file;
   // apply validations
@@ -93,13 +81,13 @@ app.post('/users', upload.single('image'), (req, res) => {
   };
 
   users.push(newUser);
-  JsonFileSystem.save('database/users.txt',users, (err) => {
+  jsonFileSystem.save('database/users.txt',users, (err) => {
     res.json(newUser);
     if(err) console.log(err);
   });
 });
 
-app.post('/lups', upload.single('image'), (req, res) => {
+app.post('/lups', fileStorage.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
   let file = req.file;
@@ -127,7 +115,7 @@ app.post('/lups', upload.single('image'), (req, res) => {
     imageUrl: url + file.path,
   };
   lups.push(newLup);
-  JsonFileSystem.save('database/lups.txt', lups, () => {
+  jsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
       author,
       id: newLup.id,
@@ -140,11 +128,11 @@ app.post('/lups', upload.single('image'), (req, res) => {
 })
 
 app.listen(port, () => {
-  JsonFileSystem.load("database/lups.txt", (err, data) => {
+  jsonFileSystem.load("database/lups.txt", (err, data) => {
     if(data) {
       lups = data;
     }
-    JsonFileSystem.load("database/users.txt", (err, data) => {
+    jsonFileSystem.load("database/users.txt", (err, data) => {
       if(data) {
         users = data;
       }
