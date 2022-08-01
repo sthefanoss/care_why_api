@@ -1,25 +1,10 @@
 const express = require('express');
-const multer = require("multer");
+
 const bodyParser = require("body-parser");
-const fileSystem = require('fs');
 const app = express();
 const port = 21147;
-
-
-const saveJson = (path, json, callback) => {
-  fileSystem.writeFile(path, JSON.stringify(json), callback);
-};
-
-const loadJson = (path, callback) => {
-  fileSystem.readFile(path, (err, data) => {
-    if(err) {
-      callback(err,null);
-    }
-    else {
-      callback(null, JSON.parse(data));
-    }
-  });
-};
+const jsonFileSystem = require('./utils/json_file_system');
+const fileStorage = require('./utils/file_storage');
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -30,19 +15,6 @@ app.use((req, res, next) => {
 });
 
 app.use("/upload", express.static(__dirname + "/upload"));
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'upload/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now().toString() + '.jpg');
-  },
-});
-
-const upload = multer({
-    storage: storage
-});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -95,7 +67,7 @@ app.get('/users/:id', (req, res) => {
   res.json(user);
 })
 
-app.post('/users', upload.single('image'), (req, res) => {
+app.post('/users', fileStorage.single('image'), (req, res) => {
   let user = req.query;
   let file = req.file;
   // apply validations
@@ -109,13 +81,13 @@ app.post('/users', upload.single('image'), (req, res) => {
   };
 
   users.push(newUser);
-  saveJson('database/users.txt',users, (err) => {
+  jsonFileSystem.save('database/users.txt',users, (err) => {
     res.json(newUser);
     if(err) console.log(err);
   });
 });
 
-app.post('/lups', upload.single('image'), (req, res) => {
+app.post('/lups', fileStorage.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
   let file = req.file;
@@ -143,7 +115,7 @@ app.post('/lups', upload.single('image'), (req, res) => {
     imageUrl: url + file.path,
   };
   lups.push(newLup);
-  saveJson('database/lups.txt', lups, () => {
+  jsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
       author,
       id: newLup.id,
@@ -156,11 +128,11 @@ app.post('/lups', upload.single('image'), (req, res) => {
 })
 
 app.listen(port, () => {
-  loadJson("database/lups.txt", (err, data) => {
+  jsonFileSystem.load("database/lups.txt", (err, data) => {
     if(data) {
       lups = data;
     }
-    loadJson("database/users.txt", (err, data) => {
+    jsonFileSystem.load("database/users.txt", (err, data) => {
       if(data) {
         users = data;
       }
