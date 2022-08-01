@@ -123,8 +123,8 @@ app.post('/lups', upload.single('image'), (req, res) => {
   let author =  findUserById(token);
   if(author == null) return res.status(400).send('user not found for given token');
   if(file == null) return res.status(400).send('image is required');
-  if(data.title == null) return res.status(400).send('title is required');
-  if(data.description == null) return res.status(400).send('description is required');
+  if(!data.title) return res.status(400).send('title is required');
+  if(!data.description) return res.status(400).send('description is required');
   let collaboratorIds = [];
   let collaborators = [];
   if(data.collaboratorIds != null) {
