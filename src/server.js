@@ -71,7 +71,7 @@ app.post('/users', fileStorage.single('image'), (req, res) => {
   let user = req.query;
   let file = req.file;
   // apply validations
-  if(user.name == null) return res.status(400).send('name is required');
+  if(!user.name) return res.status(400).send('name is required');
   if(file == null) return res.status(400).send('image is required');
   
   let newUser = {
