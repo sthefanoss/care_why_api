@@ -14,7 +14,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/upload", express.static(__dirname + "/upload"));
+app.use("/upload", express.static("upload"));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
