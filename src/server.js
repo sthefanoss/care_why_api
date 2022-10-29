@@ -240,23 +240,41 @@ app.get('/users/:id', (req, res) => {
 
 /// Auth
 /// Cria/Edita perfil
-app.post('/users', fileStorage.single('image'), (req, res) => {
+app.post('/profile', fileStorage.single('image'), (req, res) => {
   //params
-  let user = req.query;
+  let token = req.query.token;
+  let nickname = req.query.nickname;
   let file = req.file;
   // apply validations
-  if(user.name == null) return res.status(400).send('name is required');
-  let newUser = {
-    id: new Date().getTime(),
-    name: user.name,
-    imageUrl: url + req.file.path,
-  };
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
 
-  users.push(newUser);
-  jsonFileSystem.save('database/users.txt',users, (err) => {
-    res.json(newUser);
-    if(err) console.log(err);
-  });
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(!nickname) {
+    return res.status(400).send('nickname is required');
+  }
+
+  let profile = null;
+  if(authUser.profileId) {
+    profile = profiles.find(p => p.id == profileId);
+    profile.nickname = nickname;
+    profile.imageUrl = file ? url + file.path : null;
+  } else {
+    profile = {
+      id: new Date().getTime(),
+      nickname,
+      imageUrl: file ? url + file.path : null,
+    }
+    authUser.profileId = profile.id;
+    profiles.push(profile);
+  }
+  authUser.profile = profile;
+  res.json({user: authUser});
 });
 
 /// Auth
