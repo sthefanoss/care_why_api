@@ -28,15 +28,202 @@ app.use((req, res, next) => {
   next();
 });
 
-let users = [];
+let users = [{id:0, 
+  username: 'admin', 
+  password:'Fooboobar',
+  token: '43243251fdsf214',
+  isAdmin: true,
+  profileId: null}];
 
 let lups = [];
+
+let profiles = [];
 
 const findUserById = (id) => {
   return users.find(user => user.id == id);
 };
 
+/// Auth | Admin
+/// Cria usuário
+///
+/// Regras
+///  - username deve estar disponível
+app.post('/auth/user', (req, res) => {
+  //params
+  let token = req.query.token;
+  let username = req.query.username;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(!authUser.isAdmin) {
+    return res.status(400).send('must be admin');
+  }
+
+  if(!username) {
+    return res.status(400).send('username is required');
+  }
+  
+  let user = users.find(user => user.username == username);
+  if(user) {
+    return res.status(400).send('username already registered');
+  }
+
+  users.push({
+    id: new Date().getTime(),
+    username: username,
+    isAdmin: false,
+    password: null,
+    profileId: null,
+  });
+
+  res.send('ok');
+})
+
+/// Auth | Admin
+/// Lista usuários
+app.get('/auth/users', (req, res) => {
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(!authUser.isAdmin) {
+    return res.status(400).send('must be admin');
+  }
+
+  res.json(users);
+})
+
+/// Auth | Admin
+/// Reseta senha de user
+///
+/// Regras
+///  - username deve estar disponível
+///  - senha deve existir
+app.get('/auth/users', (req, res) => {
+  //params
+  let token = req.query.token;
+  let username = req.query.username;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(!authUser.isAdmin) {
+    return res.status(400).send('must be admin');
+  }
+
+  let user = users.find(user => user.username == username);
+  if(!user) {
+    return res.status(400).send('username not registered on our database');
+  }
+
+  if(!user.password) {
+    return res.status(400).send('password already reseted');
+  }
+
+  user.password = null;
+  res.send('ok');
+})
+
+/// Publica
+/// Retorna token, recebe username e password
+app.get('/login', (req, res) => {
+  let username = req.query.username;
+  let password = req.query.password;
+  // apply validations
+  if(!username || !password) {
+    return res.status(400).send('invalid credentials');
+  }
+  
+  let user = users.find(user => user.username == password && user.password == password);
+  if(!user) {
+    return res.status(400).send('invalid credentials');
+  }
+
+  res.json({token: user.token, user: user});
+})
+
+/// Pública
+/// Cria credenciais
+///
+/// Regras
+///  - username deve estar cadastrado
+///  - senha deve ser nula
+app.post('/signup', (req, res) => {
+  //params
+  let username = req.query.username;
+  let password = req.query.password;
+  // apply validations
+  if(username == null || password  == null) {
+    return res.status(400).send('invalid data');
+  }
+  
+  let user = users.find(user => user.username == username);
+  if(!user) {
+    return res.status(400).send('username not registered on our database');
+  }
+
+  if(user.password) {
+    return res.status(400).send('username already registered');
+  }
+  
+  user.token = new Date().getTime();
+  user.password = password;
+
+  res.json({token: user.token, user: user});
+})
+
+/// Auth
+/// Pega usuário por token
+app.post('/user', (req, res) => {
+    //params
+    let token = req.query.token;
+    // apply validations
+    if(!token) {
+      return res.status(400).send('invalid token');
+    }
+  
+    let authUser = users.find(user => user.token == token);
+    if(!authUser) {
+      return res.status(400).send('invalid token');
+    }
+
+  res.json(authUser);
+})
+
+/// Auth
+/// Retorna lista de lups de todos os usuários
 app.get('/lups', (req, res) => {
+  //params
+  let token = req.query.token;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
   res.json(lups.map( lup => {
     return {
       id: lup.id,
@@ -49,6 +236,8 @@ app.get('/lups', (req, res) => {
   }));
 })
 
+/// Auth
+/// Retorna lista de usuários e seus perfis
 app.get('/users', (req, res) => {
   let token = req.query.token;
   if(token == null) {
@@ -58,6 +247,8 @@ app.get('/users', (req, res) => {
   }
 })
 
+/// Auth
+/// retorna perfil
 app.get('/users/:id', (req, res) => {
   let id = req.params.id;
   let user = findUserById(id);
@@ -67,13 +258,14 @@ app.get('/users/:id', (req, res) => {
   res.json(user);
 })
 
+/// Auth
+/// Cria/Edita perfil
 app.post('/users', fileStorage.single('image'), (req, res) => {
+  //params
   let user = req.query;
   let file = req.file;
   // apply validations
   if(user.name == null) return res.status(400).send('name is required');
-  if(file == null) return res.status(400).send('image is required');
-  
   let newUser = {
     id: new Date().getTime(),
     name: user.name,
@@ -87,6 +279,8 @@ app.post('/users', fileStorage.single('image'), (req, res) => {
   });
 });
 
+/// Auth
+/// Cria lup
 app.post('/lups', fileStorage.single('image'), (req, res) => {
   let data = req.query; 
   let token = data.token;
