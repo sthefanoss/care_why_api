@@ -92,7 +92,7 @@ app.post('/auth/user', (req, res) => {
 /// Regras
 ///  - username deve estar disponível
 ///  - senha deve existir
-app.get('/auth/users', (req, res) => {
+app.post('/auth/users-password', (req, res) => {
   //params
   let token = req.query.token;
   let username = req.query.username;
@@ -134,8 +134,13 @@ app.get('/login', (req, res) => {
   }
   
   let user = users.find(user => user.username == username && user.password == password);
+  
   if(!user) {
     return res.status(400).send('invalid credentials');
+  }
+
+  if(user.profileId) {
+    user.profile = profiles.find(p => p.id == user.profileId);
   }
 
   res.json({token: user.token, user: user});
@@ -174,17 +179,21 @@ app.post('/signup', (req, res) => {
 /// Auth
 /// Pega usuário por token
 app.get('/user-data', (req, res) => {
-    //params
-    let token = req.query.token;
-    // apply validations
-    if(!token) {
-      return res.status(400).send('invalid token');
-    }
-  
-    let authUser = users.find(user => user.token == token);
-    if(!authUser) {
-      return res.status(400).send('invalid token');
-    }
+  //params
+  let token = req.query.token;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(authUser.profileId) {
+    authUser.profile = profiles.find(p => p.id == authUser.profileId);
+  }
 
   res.json(authUser);
 })
@@ -260,10 +269,10 @@ app.post('/profile', fileStorage.single('image'), (req, res) => {
   }
 
   let profile = null;
-  if(authUser.profileId) {
-    profile = profiles.find(p => p.id == profileId);
+  if(authUser.profileId && profiles.some(p => p.id == authUser.profileId)) {
+    profile = profiles.find(p => p.id == authUser.profileId);
     profile.nickname = nickname;
-    profile.imageUrl = file ? url + file.path : null;
+    profile.imageUrl = file ? url + file.path : profile.imageUrl;
   } else {
     profile = {
       id: new Date().getTime(),
