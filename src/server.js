@@ -28,16 +28,16 @@ app.use((req, res, next) => {
   next();
 });
 
-let users = [{id:0, 
+const users = [{id:0, 
   username: 'admin', 
   password:'Fooboobar',
   token: '43243251fdsf214',
   isAdmin: true,
   profileId: null}];
 
-let lups = [];
+const lups = [];
 
-let profiles = [];
+const profiles = [];
 
 const findUserById = (id) => {
   return users.find(user => user.id == id);
@@ -324,11 +324,11 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
 app.listen(port, () => {
   jsonFileSystem.load("database/lups.txt", (err, data) => {
     if(data) {
-      lups = data;
+      data.forEach((lup) => lups.push(lup));
     }
     jsonFileSystem.load("database/users.txt", (err, data) => {
       if(data) {
-        users = data;
+        data.forEach((user) => users.push(user));
       }
       console.log(`Example app listening on port ${port}`)
     })
