@@ -51,7 +51,7 @@ const findUserById = (id) => {
 app.post('/auth/user', (req, res) => {
   //params
   let token = req.query.token;
-  let username = req.query.username;
+  let username = req.query.username.toLocaleLowerCase();
   // apply validations
   if(!token) {
     return res.status(400).send('invalid token');
@@ -146,14 +146,14 @@ app.get('/auth/users', (req, res) => {
 /// Publica
 /// Retorna token, recebe username e password
 app.get('/login', (req, res) => {
-  let username = req.query.username;
+  let username = req.query.username.toLocaleLowerCase();
   let password = req.query.password;
   // apply validations
   if(!username || !password) {
     return res.status(400).send('invalid credentials');
   }
   
-  let user = users.find(user => user.username == password && user.password == password);
+  let user = users.find(user => user.username == username && user.password == password);
   if(!user) {
     return res.status(400).send('invalid credentials');
   }
@@ -169,7 +169,7 @@ app.get('/login', (req, res) => {
 ///  - senha deve ser nula
 app.post('/signup', (req, res) => {
   //params
-  let username = req.query.username;
+  let username = req.query.username.toLocaleLowerCase();
   let password = req.query.password;
   // apply validations
   if(username == null || password  == null) {
