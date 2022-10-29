@@ -87,26 +87,6 @@ app.post('/auth/user', (req, res) => {
 })
 
 /// Auth | Admin
-/// Lista usuários
-app.get('/auth/users', (req, res) => {
-  // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(!authUser.isAdmin) {
-    return res.status(400).send('must be admin');
-  }
-
-  res.json(users);
-})
-
-/// Auth | Admin
 /// Reseta senha de user
 ///
 /// Regras
@@ -193,7 +173,7 @@ app.post('/signup', (req, res) => {
 
 /// Auth
 /// Pega usuário por token
-app.post('/user', (req, res) => {
+app.get('/user-data', (req, res) => {
     //params
     let token = req.query.token;
     // apply validations
