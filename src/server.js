@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const users = [{id:0, 
+let users = [{id:0, 
   username: 'admin', 
   password:'Fooboobar',
   token: '43243251fdsf214',
@@ -120,6 +120,42 @@ app.post('/auth/users-password', (req, res) => {
   }
 
   user.password = null;
+  res.send('ok');
+})
+
+/// Auth | Admin
+/// Deleta user
+///
+/// Regras
+///  - não pode ter criado perfil
+app.post('/auth/delete-user', (req, res) => {
+  //params
+  let token = req.query.token;
+  let username = req.query.username;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(!authUser.isAdmin) {
+    return res.status(400).send('must be admin');
+  }
+
+  let user = users.find(user => user.username == username);
+  if(!user) {
+    return res.status(400).send('username not found');
+  }
+
+  if(user.profileId) {
+    return res.status(400).send('cant delete user with profile');
+  }
+
+  users = users.filter(u => u != user);
   res.send('ok');
 })
 
