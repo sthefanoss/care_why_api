@@ -341,7 +341,7 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
 
   jsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
-      authUser,
+      author: authUser,
       id: newLup.id,
       title: newLup.title,
       description: newLup.description,
