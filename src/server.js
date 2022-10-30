@@ -246,7 +246,7 @@ app.get('/users', (req, res) => {
     }
   });
 
-  res.json(users.filter(user => user.id != token));
+  res.json(users);
 })
 
 /// Auth
