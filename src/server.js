@@ -170,7 +170,7 @@ app.post('/signup', (req, res) => {
     return res.status(400).send('username already registered');
   }
   
-  user.token = new Date().getTime();
+  user.token = 'token' + (new Date().getTime());
   user.password = password;
 
   res.json({token: user.token, user: user});
