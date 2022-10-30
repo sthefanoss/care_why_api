@@ -228,12 +228,25 @@ app.get('/lups', (req, res) => {
 /// Auth
 /// Retorna lista de usuários e seus perfis
 app.get('/users', (req, res) => {
+  //params
   let token = req.query.token;
-  if(token == null) {
-    res.json(users);
-  } else {
-    res.json(users.filter(user => user.id != token));
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
   }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  users.forEach(u => {
+    if(u.profileId) {
+      u.profile = profiles.find(p => p.id == u.profileId);
+    }
+  });
+
+  res.json(users.filter(user => user.id != token));
 })
 
 /// Auth
