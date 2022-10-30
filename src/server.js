@@ -302,12 +302,20 @@ app.post('/profile', fileStorage.single('image'), (req, res) => {
 /// Auth
 /// Cria lup
 app.post('/lups', fileStorage.single('image'), (req, res) => {
-  let data = req.query; 
-  let token = data.token;
-  let file = req.file;
-  if(token == null) return res.status(400).send('token is required');
-  let author =  findUserById(token);
-  if(author == null) return res.status(400).send('user not found for given token');
+    //params
+    let token = req.query.token;
+    let file = req.file;
+    let data = req.query; 
+    // apply validations
+    if(!token) {
+      return res.status(400).send('invalid token');
+    }
+  
+    let authUser = users.find(user => user.token == token);
+    if(!authUser) {
+      return res.status(400).send('invalid token');
+    }
+
   if(file == null) return res.status(400).send('image is required');
   if(data.title == null) return res.status(400).send('title is required');
   if(data.description == null) return res.status(400).send('description is required');
@@ -321,14 +329,16 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
   }
   
   let newLup = {
-    authorId: token,
+    authorId: authUser.id,
     id: new Date().getTime(),
     title: data.title,
     description: data.description,
     collaboratorIds,
     imageUrl: url + file.path,
   };
+
   lups.push(newLup);
+  
   jsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
       author,
