@@ -338,10 +338,10 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
   };
 
   lups.push(newLup);
-  
+
   jsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
-      author,
+      authUser,
       id: newLup.id,
       title: newLup.title,
       description: newLup.description,
