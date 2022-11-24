@@ -308,7 +308,7 @@ app.post('/auth/spent-coins', (req, res) => {
 
 /// Auth
 /// Pega usuário por token
-app.get('/exanges', (req, res) => {
+app.get('/exchanges', (req, res) => {
   //params
   let token = req.query.token;
   // apply validations
