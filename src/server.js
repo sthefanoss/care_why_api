@@ -28,16 +28,21 @@ app.use((req, res, next) => {
   next();
 });
 
-let users = [{id:0, 
-  username: 'admin', 
+let users = [{id:0,
+  username: 'sthefanoAdmin', 
   password:'Fooboobar',
   token: '43243251fdsf214',
   isAdmin: true,
-  profileId: null}];
+  isManager: true,
+  profileId: null,
+  coins: 0
+}];
 
 const lups = [];
 
 const profiles = [];
+
+const exchanges = [];
 
 const findUserById = (id) => {
   return users.find(user => user.id == id);
@@ -79,6 +84,7 @@ app.post('/auth/user', (req, res) => {
     id: new Date().getTime(),
     username: username,
     isAdmin: false,
+    isManager: false,
     password: null,
     profileId: null,
   });
@@ -87,6 +93,43 @@ app.post('/auth/user', (req, res) => {
 })
 
 /// Auth | Admin
+/// Atualiza se usuário é gerente
+///
+/// Regras
+///  - username deve estar disponível
+app.post('/auth/set-manager', (req, res) => {
+  //params
+  let token = req.query.token;
+  let username = req.query.username.toLocaleLowerCase();
+  let isManager = req.query.isManager;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(!authUser.isAdmin) {
+    return res.status(400).send('must be admin');
+  }
+
+  if(!username) {
+    return res.status(400).send('username is required');
+  }
+  
+  let user = users.find(user => user.username == username);
+  if(user) {
+    return res.status(400).send('username already registered');
+  }
+
+  user.isManager = isManager;
+  res.send('ok');
+})
+
+/// Auth | Admin | Manager
 /// Reseta senha de user
 ///
 /// Regras
@@ -106,8 +149,8 @@ app.post('/auth/users-password', (req, res) => {
     return res.status(400).send('invalid token');
   }
 
-  if(!authUser.isAdmin) {
-    return res.status(400).send('must be admin');
+  if(!authUser.isAdmin || !authUser.isManager) {
+    return res.status(400).send('must be admin or manager');
   }
 
   let user = users.find(user => user.username == username);
@@ -123,7 +166,7 @@ app.post('/auth/users-password', (req, res) => {
   res.send('ok');
 })
 
-/// Auth | Admin
+/// Auth | Admin | Manager
 /// Deleta user
 ///
 /// Regras
@@ -142,8 +185,8 @@ app.post('/auth/delete-user', (req, res) => {
     return res.status(400).send('invalid token');
   }
 
-  if(!authUser.isAdmin) {
-    return res.status(400).send('must be admin');
+  if(!authUser.isAdmin || !authUser.isManager) {
+    return res.status(400).send('must be admin or manager');
   }
 
   let user = users.find(user => user.username == username);
@@ -210,6 +253,83 @@ app.post('/signup', (req, res) => {
   user.password = password;
 
   res.json({token: user.token, user: user});
+})
+
+/// Auth | Admin | Manager
+/// Gasta moedas de usuário
+///
+/// Recebe amount e reason
+/// Regras
+///  - usuário que está fazendo a request deve ser admin ou manager
+///  - usuario que esta sendo debitado deve ter as moedas
+app.post('/auth/spent-coins', (req, res) => {
+  //params
+  let token = req.query.token;
+  let reason = req.query.reason;
+  let amount = req.query.amount;
+  let username = req.query.username;
+  // apply validations
+  if(!reason) {
+    return res.status(400).send('reason is required');
+  }
+
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if((!authUser.isAdmin && !authUser.isManager)) {
+    return res.status(400).send('must be admin or manager');
+  }
+
+  if(!username) {
+    return res.status(400).send('username is required');
+  }
+  
+  let user = users.find(user => user.username == username);
+  if(!user) {
+    return res.status(400).send('username doesnt exist');
+  }
+
+  if(amount < 1 || amount > user.coins) {
+    return res.status(400).send('invalid amount');
+  }
+
+  user.coins = user.coins - amount;
+  exchanges.push({
+    reason, amount, username, authorizedBy: authUser.username,
+  });
+  res.send('ok');
+})
+
+/// Auth
+/// Pega usuário por token
+app.get('/exanges', (req, res) => {
+  //params
+  let token = req.query.token;
+  // apply validations
+  if(!token) {
+    return res.status(400).send('invalid token');
+  }
+
+  let authUser = users.find(user => user.token == token);
+  if(!authUser) {
+    return res.status(400).send('invalid token');
+  }
+
+  if(authUser.profileId) {
+    authUser.profile = profiles.find(p => p.id == authUser.profileId);
+  }
+
+  if(authUser.isManager || authUser.isAdmin) {
+    return res.json(exchanges);
+  }
+
+  res.json(exchanges.filter(e => e.username == authUser.username));
 })
 
 /// Auth
@@ -363,7 +483,8 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
     collaborators = collaboratorIds.map(findUserById);
     if(collaborators.some((c) => c == null)) return res.status(400).send('collaborator not found');
   }
-  
+
+  authUser.coins++;
   let newLup = {
     authorId: authUser.id,
     id: new Date().getTime(),
@@ -374,6 +495,7 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
   };
 
   lups.push(newLup);
+ 
 
   jsonFileSystem.save('database/lups.txt', lups, () => {
     res.json({
