@@ -87,6 +87,7 @@ app.post('/auth/user', (req, res) => {
     isManager: false,
     password: null,
     profileId: null,
+    coins: 0,
   });
 
   res.send('ok');
@@ -121,8 +122,8 @@ app.post('/auth/set-manager', (req, res) => {
   }
   
   let user = users.find(user => user.username == username);
-  if(user) {
-    return res.status(400).send('username already registered');
+  if(!user) {
+    return res.status(400).send('username not found');
   }
 
   user.isManager = isManager;
