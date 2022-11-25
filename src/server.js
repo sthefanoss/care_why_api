@@ -48,7 +48,7 @@ const findUserById = (id) => {
   return users.find(user => user.id == id);
 };
 
-/// Auth | Admin
+/// Auth | Admin | Manager
 /// Cria usuário
 ///
 /// Regras
@@ -67,8 +67,8 @@ app.post('/auth/user', (req, res) => {
     return res.status(400).send('invalid token');
   }
 
-  if(!authUser.isAdmin) {
-    return res.status(400).send('must be admin');
+  if(!authUser.isAdmin && !authUser.isManager) {
+    return res.status(400).send('must be admin or manager');
   }
 
   if(!username) {
@@ -186,7 +186,7 @@ app.post('/auth/delete-user', (req, res) => {
     return res.status(400).send('invalid token');
   }
 
-  if(!authUser.isAdmin || !authUser.isManager) {
+  if(!authUser.isAdmin && !authUser.isManager) {
     return res.status(400).send('must be admin or manager');
   }
 
@@ -302,7 +302,11 @@ app.post('/auth/spent-coins', (req, res) => {
 
   user.coins = user.coins - amount;
   exchanges.push({
-    reason, amount, username, authorizedBy: authUser.username,
+    id: new Date().getTime(),
+    reason,
+    amount,
+    username,
+    authorizedBy: authUser.username,
   });
   res.send('ok');
 })
