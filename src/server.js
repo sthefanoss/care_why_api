@@ -511,15 +511,15 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
 })
 
 app.listen(port, () => {
-  jsonFileSystem.load("database/lups.txt", (err, data) => {
-    if(data) {
-      data.forEach((lup) => lups.push(lup));
-    }
-    jsonFileSystem.load("database/users.txt", (err, data) => {
-      if(data) {
-        data.forEach((user) => users.push(user));
-      }
-      console.log(`Example app listening on port ${port}`)
-    })
-  });
+  // jsonFileSystem.load("database/lups.txt", (err, data) => {
+  //   if(data) {
+  //     data.forEach((lup) => lups.push(lup));
+  //   }
+  //   jsonFileSystem.load("database/users.txt", (err, data) => {
+  //     if(data) {
+  //       data.forEach((user) => users.push(user));
+  //     }
+  //     console.log(`Example app listening on port ${port}`)
+  //   })
+  // });
 })								
