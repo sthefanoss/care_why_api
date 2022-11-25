@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const users = [{id:0,
+let users = [{id:0,
   username: 'admin', 
   password:'admin',
   token: '43243251fdsf214',
@@ -38,6 +38,7 @@ const users = [{id:0,
   coins: 0
 }];
 
+// let para poder deletar usuario
 const lups = [];
 
 const profiles = [];
