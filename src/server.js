@@ -127,6 +127,10 @@ app.post('/auth/set-manager', (req, res) => {
     return res.status(400).send('username not found');
   }
 
+  if(user.isAdmin) {
+    return res.status(400).send('user must not be admin admin');
+  }
+
   user.isManager = isManager;
   res.send('ok');
 })
