@@ -28,12 +28,12 @@ app.use((req, res, next) => {
   next();
 });
 
-let users = [{id:0,
-  username: 'sthefanoAdmin', 
-  password:'Fooboobar',
+const users = [{id:0,
+  username: 'admin', 
+  password:'admin',
   token: '43243251fdsf214',
   isAdmin: true,
-  isManager: true,
+  isManager: false,
   profileId: null,
   coins: 0
 }];
