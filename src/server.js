@@ -5,16 +5,9 @@ const app = express();
 const port = 21147;
 const jsonFileSystem = require('./utils/json_file_system');
 const fileStorage = require('./utils/file_storage');
-const Sequelize = require("sequelize");
-const sequelize = new Sequelize(
- 'carewhyapp',
- 'carewhyapp',
- 'fooboo123',
-  {
-    host: 'mysql.carewhyapp.kinghost.net',
-    dialect: 'mysql'
-  }
-);
+const database = require('./utils/database');
+const Lup = require('./models/lup');
+const User = require('./models/user');
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -529,7 +522,10 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
   });
 })
 
-sequelize.authenticate().then(() => {
+Lup.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
+User.hasMany(Lup);
+
+database.sync().then(() => {
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');
