@@ -2,7 +2,7 @@ const express = require('express');
 
 const bodyParser = require("body-parser");
 const app = express();
-const port = 21147;
+const port = 21070;
 const jsonFileSystem = require('./utils/json_file_system');
 const fileStorage = require('./utils/file_storage');
 const database = require('./utils/database');
