@@ -132,7 +132,7 @@ app.delete('/admin/user', verifyJWT, async (req, res) => {
   if (user.password) {
     return res.status(400).send('cant delete user already in use');
   }
-  
+
   await User.destroy({ where: { username } });
   res.send('ok');
 });
@@ -196,7 +196,7 @@ app.get('/login', async (req, res) => {
 
   const user = await User.scope('withPassword').findOne({ where: { username } });
 
-  if (!user) {
+  if (!user || !user.password) {
     return res.status(400).send('invalid credentials 1');
   }
 
