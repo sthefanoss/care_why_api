@@ -1,19 +1,15 @@
 const Sequelize = require('sequelize');
 
-const database = require('../utils/database');
+const database = require('../utils/database.js');
+console.log(database)
+
 
 module.exports = database.define('lup', {
-    id:{
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        allowNull: false,
-        primaryKey: true,
-    },
-    description:{
+    description: {
         type: Sequelize.TEXT('medium'),
         allowNull: false,
     },
-    imageUrl:{
+    imageUrl: {
         type: Sequelize.STRING,
         allowNull: true,
     },

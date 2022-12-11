@@ -6,8 +6,9 @@ const port = 21070;
 const jsonFileSystem = require('./utils/json_file_system');
 const fileStorage = require('./utils/file_storage');
 const database = require('./utils/database');
-const Lup = require('./models/lup');
 const User = require('./models/user');
+const Lup = require('./models/lup');
+const Exchange = require('./models/exchange');
 
 const url = 'http://carewhyapp.kinghost.net/';
 
@@ -522,10 +523,11 @@ app.post('/lups', fileStorage.single('image'), (req, res) => {
   });
 })
 
-Lup.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
-User.hasMany(Lup);
+Lup.belongsTo(User, {foreignKey: 'authorId'});
+Exchange.belongsTo(User, {foreignKey: 'buyerId'});
+Exchange.belongsTo(User, {foreignKey: 'sellerId'});
 
-database.sync().then(() => {
+database.sync({force: true}).then(() => {
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');
