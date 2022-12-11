@@ -15,6 +15,10 @@ const dirname = require('../dirname');
 const url = 'http://carewhyapp.kinghost.net/';
 const jwtSecret = '3ad5b1cbddc52a80a89a3e22fa3a9f49';
 
+const removeDuplicates = array => {
+  return [...new Set(array)];
+}
+
 const verifyJWT = async (req, res, next) => {
   const token = req.headers['token'];
   if (!token) return res.status(401).json({ message: 'No token provided.' });
@@ -36,7 +40,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/uploads", express.static(dirname+'/uploads'));
+app.use("/uploads", express.static(dirname + '/uploads'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -245,13 +249,19 @@ app.post('/signup', async (req, res) => {
 /// Auth
 /// Pega usuário por token
 app.get('/exchanges', verifyJWT, async (req, res) => {
-  if (req.user.isManager || req.user.isAdmin) {
-    const exchanges = await Exchange.findAll();
-    return res.json({ exchanges });
+  let filter = {};
+  if (!req.user.isManager && !req.user.isAdmin) {
+    filter = { where: { buyerId: req.user.id } };
   }
-
-  const exchanges = await Exchange.findAll({ where: { buyerId: req.user.id } });
-  res.json({ exchanges });
+  const exchanges = await Exchange.findAll(filter);
+  let userIds = [];
+  for (index in exchanges) {
+    userIds.push(exchanges[index].buyerId);
+    userIds.push(exchanges[index].sellerId);
+  }
+  userIds = removeDuplicates(userIds);
+  const users = await User.findAll({ where: { id: userIds } });
+  res.json({ exchanges, users });
 });
 
 /// Auth
@@ -264,7 +274,9 @@ app.get('/user-data', verifyJWT, async (req, res) => {
 /// Retorna lista de lups de todos os usuários
 app.get('/lups', verifyJWT, async (req, res) => {
   const lups = await Lup.findAll();
-  res.json({ lups });
+  const userIds = removeDuplicates(lups.map((lup) => lup.authorId));
+  const users = await User.findAll({ where: { id: userIds } });
+  res.json({ lups, users });
 });
 
 /// Auth
@@ -326,7 +338,7 @@ database.sync({
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');
-    console.log(dirname+'/uploads');
+    console.log(dirname + '/uploads');
   });
 }).catch((error) => {
   console.error('Unable to connect to the database: ', error);
