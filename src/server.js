@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs")
 const app = express();
 const port = 21070;
-const fileStorage = require('./utils/file_storage');
+const {fileStorage, fileStoragePath} = require('./utils/file_storage');
 const database = require('./utils/database');
 const User = require('./models/user');
 const Lup = require('./models/lup');
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/upload", express.static("upload"));
+app.use(fileStoragePath, express.static("upload"));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
