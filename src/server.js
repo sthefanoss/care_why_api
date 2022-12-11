@@ -124,7 +124,7 @@ app.delete('/admin/user', verifyJWT, async (req, res) => {
     return res.status(400).send('must be admin or manager');
   }
 
-  const user = await User.findOne({ where: { username } });
+  const user = await User.scope('withPassword').findOne({ where: { username } });
   if (!user) {
     return res.status(400).send('username not found');
   }
@@ -132,7 +132,7 @@ app.delete('/admin/user', verifyJWT, async (req, res) => {
   if (user.password) {
     return res.status(400).send('cant delete user already in use');
   }
-
+  
   await User.destroy({ where: { username } });
   res.send('ok');
 });
