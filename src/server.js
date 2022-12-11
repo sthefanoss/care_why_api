@@ -112,43 +112,6 @@ app.post('/admin/set-manager', verifyJWT, async (req, res) => {
 })
 
 /// Auth | Admin | Manager
-/// Reseta senha de user
-///
-/// Regras
-///  - username deve estar disponível
-///  - senha deve existir
-app.post('/auth/users-password', (req, res) => {
-  //params
-  let token = req.query.token;
-  let username = req.query.username;
-  // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(!authUser.isAdmin || !authUser.isManager) {
-    return res.status(400).send('must be admin or manager');
-  }
-
-  let user = users.find(user => user.username == username);
-  if(!user) {
-    return res.status(400).send('username not registered on our database');
-  }
-
-  if(!user.password) {
-    return res.status(400).send('password already reseted');
-  }
-
-  user.password = null;
-  res.send('ok');
-})
-
-/// Auth | Admin | Manager
 /// Deleta user
 ///
 /// Regras
