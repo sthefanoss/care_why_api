@@ -129,7 +129,7 @@ app.delete('/admin/user', verifyJWT, async (req, res) => {
     return res.status(400).send('username not found');
   }
 
-  if (user.password) {
+  if (user.password || user.nickname) {
     return res.status(400).send('cant delete user already in use');
   }
 
