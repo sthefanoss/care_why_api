@@ -5,6 +5,10 @@ console.log(database)
 
 
 module.exports = database.define('lup', {
+    title: {
+        type: Sequelize.STRING,
+        allowNull: true,
+    },
     description: {
         type: Sequelize.TEXT('medium'),
         allowNull: false,
