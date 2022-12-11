@@ -84,40 +84,31 @@ app.post('/admin/user', verifyJWT, async (req, res) => {
 ///
 /// Regras
 ///  - username deve estar disponível
-app.post('/auth/set-manager', (req, res) => {
+app.post('/admin/set-manager', verifyJWT, async (req, res) => {
   //params
-  let token = req.query.token;
-  let username = req.query.username.toLocaleLowerCase();
-  let isManager = req.query.isManager;
+  let username = req.body.username?.toLocaleLowerCase();
+  let isManager = req.body.isManager === true;
   // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(!authUser.isAdmin) {
+  if(!req.user.isAdmin) {
     return res.status(400).send('must be admin');
   }
 
   if(!username) {
     return res.status(400).send('username is required');
   }
+
+  if(req.body.isManager == null) {
+    return res.status(400).send('isManager is required');
+  }
   
-  let user = users.find(user => user.username == username);
+  const user = await User.findOne({ where: { username } });
   if(!user) {
     return res.status(400).send('username not found');
   }
 
-  if(user.isAdmin) {
-    return res.status(400).send('user must not be admin admin');
-  }
-
   user.isManager = isManager;
-  res.send('ok');
+  await user.save();
+  res.json({isManager});
 })
 
 /// Auth | Admin | Manager
