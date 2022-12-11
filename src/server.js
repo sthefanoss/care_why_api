@@ -10,7 +10,6 @@ const User = require('./models/user');
 const Lup = require('./models/lup');
 const Exchange = require('./models/exchange');
 const jwt = require('jsonwebtoken');
-const { json } = require('express/lib/response');
 
 const url = 'http://carewhyapp.kinghost.net/';
 const jwtSecret = '3ad5b1cbddc52a80a89a3e22fa3a9f49';
@@ -18,13 +17,13 @@ const jwtSecret = '3ad5b1cbddc52a80a89a3e22fa3a9f49';
 const verifyJWT = async (req, res, next) => {
   const token = req.headers['token'];
   if (!token) return res.status(401).json({ message: 'No token provided.' });
-  
+
   jwt.verify(token, jwtSecret, async (err, decoded) => {
     if (err) return res.status(500).json({ message: 'Failed to authenticate token.' });
-    
-    const user = await User.findOne({ where: { id: decoded.userId} });
+
+    const user = await User.findOne({ where: { id: decoded.userId } });
     if (!user) return res.status(500).json({ message: 'Invalid token.' });
-    
+
     req.user = user;
     next();
   });
@@ -43,7 +42,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 app.use((req, res, next) => {
-  if(req.url == '/') {
+  if (req.url == '/') {
     res.redirect('http://app.carewhyapp.kinghost.net/');
     return;
   }
@@ -60,24 +59,24 @@ app.post('/admin/user', verifyJWT, async (req, res) => {
   let username = req.body.username.toLocaleLowerCase();
   // apply validations
 
-  if(!req.user.isAdmin && !req.user.isManager) {
+  if (!req.user.isAdmin && !req.user.isManager) {
     return res.status(400).send('must be admin or manager');
   }
 
-  if(!username) {
+  if (!username) {
     return res.status(400).send('username is required');
   }
 
   const user = await User.findOne({ where: { username } });
-  
-  if(user) {
+
+  if (user) {
     return res.status(400).send('username already registered');
   }
 
   const newUser = User.build({ username });
   await newUser.save();
   res.send('ok');
-})
+});
 
 /// Auth | Admin
 /// Atualiza se usuário é gerente
@@ -89,27 +88,27 @@ app.post('/admin/set-manager', verifyJWT, async (req, res) => {
   let username = req.body.username?.toLocaleLowerCase();
   let isManager = req.body.isManager === true;
   // apply validations
-  if(!req.user.isAdmin) {
+  if (!req.user.isAdmin) {
     return res.status(400).send('must be admin');
   }
 
-  if(!username) {
+  if (!username) {
     return res.status(400).send('username is required');
   }
 
-  if(req.body.isManager == null) {
+  if (req.body.isManager == null) {
     return res.status(400).send('isManager is required');
   }
-  
+
   const user = await User.findOne({ where: { username } });
-  if(!user) {
+  if (!user) {
     return res.status(400).send('username not found');
   }
 
   user.isManager = isManager;
   await user.save();
-  res.json({isManager});
-})
+  res.json({ isManager });
+});
 
 /// Auth | Admin | Manager
 /// Deleta user
@@ -120,22 +119,22 @@ app.delete('/admin/user', verifyJWT, async (req, res) => {
   //params
   let username = req.body.username?.toLocaleLowerCase();
   // apply validations
-  if(!req.user.isAdmin && !req.user.isManager) {
+  if (!req.user.isAdmin && !req.user.isManager) {
     return res.status(400).send('must be admin or manager');
   }
 
   const user = await User.findOne({ where: { username } });
-  if(!user) {
+  if (!user) {
     return res.status(400).send('username not found');
   }
 
-  if(user.password) {
+  if (user.password) {
     return res.status(400).send('cant delete user already in use');
   }
 
-  await User.destroy({where: { username }});
+  await User.destroy({ where: { username } });
   res.send('ok');
-})
+});
 
 /// Auth | Admin | Manager
 /// Gasta moedas de usuário
@@ -150,28 +149,28 @@ app.post('/admin/exchanges', verifyJWT, async (req, res) => {
   let coins = req.body.coins;
   let username = req.body.username;
   // apply validations
-  if((!req.user.isAdmin && !req.user.isManager)) {
+  if ((!req.user.isAdmin && !req.user.isManager)) {
     return res.status(400).send('must be admin or manager');
   }
 
-  if(!reason) {
+  if (!reason) {
     return res.status(400).send('reason is required');
   }
 
-  if(!coins) {
+  if (!coins) {
     return res.status(400).send('coins is required');
   }
 
-  if(!username) {
+  if (!username) {
     return res.status(400).send('username is required');
   }
-  
+
   const user = await User.findOne({ where: { username } });
-  if(!user) {
+  if (!user) {
     return res.status(400).send('username not found');
   }
 
-  if(coins < 1 || coins > user.coins) {
+  if (coins < 1 || coins > user.coins) {
     return res.status(400).send('invalid coins');
   }
 
@@ -182,33 +181,33 @@ app.post('/admin/exchanges', verifyJWT, async (req, res) => {
   });
   await exchange.save();
   res.json(exchange);
-})
+});
 
 /// Publica
 /// Retorna token, recebe username e password
-app.get('/login', async (req, res)  => {
+app.get('/login', async (req, res) => {
   let username = req.body?.username?.toLocaleLowerCase();
   let password = req.body?.password;
   // apply validations
-  if(!username || !password) {
+  if (!username || !password) {
     return res.status(400).send('username and password are required');
   }
 
   const user = await User.scope('withPassword').findOne({ where: { username } });
 
-  if(!user) {
+  if (!user) {
     return res.status(400).send('invalid credentials 1');
   }
 
   const hasMatch = await bcrypt.compare(password, user.password);
-   
-  if(!hasMatch) {
+
+  if (!hasMatch) {
     return res.status(400).send('invalid credentials 2');
   }
 
   delete user.dataValues.password;
   const token = jwt.sign({ userId: user.id }, jwtSecret);
-  res.json({token: token, user: user});
+  res.json({ token: token, user: user });
 });
 
 /// Pública
@@ -222,99 +221,57 @@ app.post('/signup', async (req, res) => {
   let username = req.body.username.toLocaleLowerCase();
   let password = req.body.password;
   // apply validations
-  if(!username || !password) {
+  if (!username || !password) {
     return res.status(400).send('invalid data');
   }
-  
+
   const user = await User.scope('withPassword').findOne({ where: { username } });
-  if(!user) {
+  if (!user) {
     return res.status(400).send('username not registered on our database');
   }
 
-  if(user.password) {
+  if (user.password) {
     return res.status(400).send('username already registered');
   }
-  
+
   user.password = await bcrypt.hash(password, 8);
   await user.save();
   delete user.dataValues.password;
   const token = jwt.sign({ userId: user.id }, jwtSecret);
-  res.json({token: token, user: user});
-})
+  res.json({ token: token, user: user });
+});
 
 /// Auth
 /// Pega usuário por token
-app.get('/exchanges', (req, res) => {
-  //params
-  let token = req.query.token;
-  // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
+app.get('/exchanges', verifyJWT, async (req, res) => {
+  if (req.user.isManager || req.user.isAdmin) {
+    const exchanges = await Exchange.findAll();
+    return res.json({ exchanges });
   }
 
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(authUser.profileId) {
-    authUser.profile = profiles.find(p => p.id == authUser.profileId);
-  }
-
-  if(authUser.isManager || authUser.isAdmin) {
-    return res.json(exchanges);
-  }
-
-  res.json(exchanges.filter(e => e.username == authUser.username));
-})
+  const exchanges = await Exchange.findAll({ where: { buyerId: req.user.id } });
+  res.json({ exchanges });
+});
 
 /// Auth
 /// Pega usuário por token
 app.get('/user-data', verifyJWT, async (req, res) => {
-  res.json({user: req.user});
-})
+  res.json({ user: req.user });
+});
 
 /// Auth
 /// Retorna lista de lups de todos os usuários
 app.get('/lups', verifyJWT, async (req, res) => {
   const lups = await Lup.findAll();
-  res.json(lups);
-})
+  res.json({ lups });
+});
 
 /// Auth
 /// Retorna lista de usuários e seus perfis
-app.get('/users', (req, res) => {
-  //params
-  let token = req.query.token;
-  // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  users.forEach(u => {
-    if(u.profileId) {
-      u.profile = profiles.find(p => p.id == u.profileId);
-    }
-  });
-
-  res.json(users);
-})
-
-/// Auth
-/// retorna perfil
-app.get('/users/:id', (req, res) => {
-  let id = req.params.id;
-  let user = findUserById(id);
-  if(user == undefined) {
-    res.status(400).send(`id not found ${users.length} ${id}`);
-  }
-  res.json(user);
-})
+app.get('/users', verifyJWT, async (req, res) => {
+  const users = await User.findAll();
+  res.json({ users });
+});
 
 /// Auth
 /// Cria/Edita perfil
@@ -323,37 +280,29 @@ app.post('/profile', verifyJWT, fileStorage.single('image'), async (req, res) =>
   let nickname = req.body.nickname;
   let file = req.file;
   // apply validations
-  if(!nickname) {
+  if (!nickname) {
     return res.status(400).send('nickname is required');
   }
   req.user.nickname = nickname;
-  if(file) { req.user.imageUrl = url + file.path; }
+  if (file) { req.user.imageUrl = url + file.path; }
   await req.user.save();
 
-  res.json({user: req.user});
+  res.json({ user: req.user });
 });
 
 /// Auth
 /// Cria lup
 app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
-    //params
-    let file = req.file;
-    let data = req.body; 
-    // apply validations
+  //params
+  let file = req.file;
+  let data = req.body;
 
-  if(file == null) return res.status(400).send('image is required');
-  if(data.title == null) return res.status(400).send('title is required');
-  if(data.description == null) return res.status(400).send('description is required');
-  // let collaboratorIds = [];
-  // let collaborators = [];
-  // if(data.collaboratorIds != null) {
-  //   if(!Array.isArray(data.collaboratorIds)) return res.status(400).send('collaboratorIds must be an array');
-  //   collaboratorIds = data.collaboratorIds;
-  //   collaborators = collaboratorIds.map(findUserById);
-  //   if(collaborators.some((c) => c == null)) return res.status(400).send('collaborator not found');
-  // }
+  // apply validations
+  if (file == null) return res.status(400).send('image is required');
+  if (data.title == null) return res.status(400).send('title is required');
+  if (data.description == null) return res.status(400).send('description is required');
 
-  // authUser.coins++;
+  // adiciona uma moeda para o usuário que criou a Lup
   req.user.coins++;
   await req.user.save();
   const lup = Lup.build({
@@ -361,14 +310,14 @@ app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
     title: data.title,
     description: data.description,
     imageUrl: url + file.path,
-  }); 
+  });
   await lup.save();
   res.json(lup);
-})
+});
 
-Lup.belongsTo(User, {foreignKey: 'authorId'});
-Exchange.belongsTo(User, {foreignKey: 'buyerId'});
-Exchange.belongsTo(User, {foreignKey: 'sellerId'});
+Lup.belongsTo(User, { foreignKey: 'authorId' });
+Exchange.belongsTo(User, { foreignKey: 'buyerId' });
+Exchange.belongsTo(User, { foreignKey: 'sellerId' });
 
 database.sync({
   //force: true
@@ -376,7 +325,7 @@ database.sync({
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');
-  });	
+  });
 }).catch((error) => {
   console.error('Unable to connect to the database: ', error);
 });							
