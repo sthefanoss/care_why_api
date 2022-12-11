@@ -7,7 +7,7 @@ module.exports = database.define('exchange', {
         type: Sequelize.STRING,
         allowNull: false,
     },
-    quantity: {
+    coins: {
         type: Sequelize.INTEGER,
         allowNull: false,
     },

@@ -135,7 +135,54 @@ app.delete('/admin/user', verifyJWT, async (req, res) => {
 
   await User.destroy({where: { username }});
   res.send('ok');
-}) 
+})
+
+/// Auth | Admin | Manager
+/// Gasta moedas de usuário
+///
+/// Recebe coins e reason
+/// Regras
+///  - usuário que está fazendo a request deve ser admin ou manager
+///  - usuario que esta sendo debitado deve ter as moedas
+app.post('/admin/exchanges', verifyJWT, async (req, res) => {
+  //params
+  let reason = req.body.reason;
+  let coins = req.body.coins;
+  let username = req.body.username;
+  // apply validations
+  if((!req.user.isAdmin && !req.user.isManager)) {
+    return res.status(400).send('must be admin or manager');
+  }
+
+  if(!reason) {
+    return res.status(400).send('reason is required');
+  }
+
+  if(!coins) {
+    return res.status(400).send('coins is required');
+  }
+
+  if(!username) {
+    return res.status(400).send('username is required');
+  }
+  
+  const user = await User.findOne({ where: { username } });
+  if(!user) {
+    return res.status(400).send('username not found');
+  }
+
+  if(coins < 1 || coins > user.coins) {
+    return res.status(400).send('invalid coins');
+  }
+
+  user.coins = user.coins - coins;
+  await user.save();
+  const exchange = Exchange.build({
+    reason, coins, 'buyerId': user.id, 'sellerId': req.user.id,
+  });
+  await exchange.save();
+  res.json(exchange);
+})
 
 /// Publica
 /// Retorna token, recebe username e password
@@ -193,61 +240,6 @@ app.post('/signup', async (req, res) => {
   delete user.dataValues.password;
   const token = jwt.sign({ userId: user.id }, jwtSecret);
   res.json({token: token, user: user});
-})
-
-/// Auth | Admin | Manager
-/// Gasta moedas de usuário
-///
-/// Recebe amount e reason
-/// Regras
-///  - usuário que está fazendo a request deve ser admin ou manager
-///  - usuario que esta sendo debitado deve ter as moedas
-app.post('/auth/spent-coins', (req, res) => {
-  //params
-  let token = req.query.token;
-  let reason = req.query.reason;
-  let amount = req.query.amount;
-  let username = req.query.username;
-  // apply validations
-  if(!reason) {
-    return res.status(400).send('reason is required');
-  }
-
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if((!authUser.isAdmin && !authUser.isManager)) {
-    return res.status(400).send('must be admin or manager');
-  }
-
-  if(!username) {
-    return res.status(400).send('username is required');
-  }
-  
-  let user = users.find(user => user.username == username);
-  if(!user) {
-    return res.status(400).send('username doesnt exist');
-  }
-
-  if(amount < 1 || amount > user.coins) {
-    return res.status(400).send('invalid amount');
-  }
-
-  user.coins = user.coins - amount;
-  exchanges.push({
-    id: new Date().getTime(),
-    reason,
-    amount,
-    username,
-    authorizedBy: authUser.username,
-  });
-  res.send('ok');
 })
 
 /// Auth
