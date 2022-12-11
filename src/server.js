@@ -35,7 +35,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(fileStoragePath, express.static("upload"));
+app.use(express.static(fileStoragePath));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
