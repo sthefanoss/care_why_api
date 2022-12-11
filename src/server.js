@@ -116,34 +116,24 @@ app.post('/admin/set-manager', verifyJWT, async (req, res) => {
 ///
 /// Regras
 ///  - não pode ter criado perfil
-app.post('/auth/delete-user', (req, res) => {
+app.delete('/admin/user', verifyJWT, async (req, res) => {
   //params
-  let token = req.query.token;
-  let username = req.query.username;
+  let username = req.body.username?.toLocaleLowerCase();
   // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(!authUser.isAdmin && !authUser.isManager) {
+  if(!req.user.isAdmin && !req.user.isManager) {
     return res.status(400).send('must be admin or manager');
   }
 
-  let user = users.find(user => user.username == username);
+  const user = await User.findOne({ where: { username } });
   if(!user) {
     return res.status(400).send('username not found');
   }
 
-  if(user.profileId) {
-    return res.status(400).send('cant delete user with profile');
+  if(user.password) {
+    return res.status(400).send('cant delete user already in use');
   }
 
-  users = users.filter(u => u != user);
+  await User.destroy({where: { username }});
   res.send('ok');
 }) 
 
