@@ -186,8 +186,8 @@ app.post('/admin/exchanges', verifyJWT, async (req, res) => {
 /// Publica
 /// Retorna token, recebe username e password
 app.get('/login', async (req, res) => {
-  let username = req.body?.username?.toLocaleLowerCase();
-  let password = req.body?.password;
+  let username = req.query?.username?.toLocaleLowerCase();
+  let password = req.query?.password;
   // apply validations
   if (!username || !password) {
     return res.status(400).send('username and password are required');
