@@ -1,16 +1,34 @@
 const express = require('express');
 
 const bodyParser = require("body-parser");
+const bcrypt = require("bcryptjs")
 const app = express();
 const port = 21070;
-const jsonFileSystem = require('./utils/json_file_system');
 const fileStorage = require('./utils/file_storage');
 const database = require('./utils/database');
 const User = require('./models/user');
 const Lup = require('./models/lup');
 const Exchange = require('./models/exchange');
+const jwt = require('jsonwebtoken');
+const { json } = require('express/lib/response');
 
 const url = 'http://carewhyapp.kinghost.net/';
+const jwtSecret = '3ad5b1cbddc52a80a89a3e22fa3a9f49';
+
+const verifyJWT = async (req, res, next) => {
+  const token = req.headers['token'];
+  if (!token) return res.status(401).json({ message: 'No token provided.' });
+  
+  jwt.verify(token, jwtSecret, async (err, decoded) => {
+    if (err) return res.status(500).json({ message: 'Failed to authenticate token.' });
+    
+    const user = await User.findOne({ where: { id: decoded.userId} });
+    if (!user) return res.status(500).json({ message: 'Invalid token.' });
+    
+    req.user = user;
+    next();
+  });
+};
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -31,27 +49,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-let users = [{id:0,
-  username: 'admin', 
-  password:'admin',
-  token: '43243251fdsf214',
-  isAdmin: true,
-  isManager: false,
-  profileId: null,
-  coins: 0
-}];
-
-// let para poder deletar usuario
-const lups = [];
-
-const profiles = [];
-
-const exchanges = [];
-
-const findUserById = (id) => {
-  return users.find(user => user.id == id);
-};
 
 /// Auth | Admin | Manager
 /// Cria usuário
@@ -210,30 +207,34 @@ app.post('/auth/delete-user', (req, res) => {
 
   users = users.filter(u => u != user);
   res.send('ok');
-})
+}) 
 
 /// Publica
 /// Retorna token, recebe username e password
-app.get('/login', (req, res) => {
-  let username = req.query.username.toLocaleLowerCase();
-  let password = req.query.password;
+app.get('/login', async (req, res)  => {
+  let username = req.body?.username?.toLocaleLowerCase();
+  let password = req.body?.password;
   // apply validations
   if(!username || !password) {
-    return res.status(400).send('invalid credentials');
+    return res.status(400).send('username and password are required');
   }
-  
-  let user = users.find(user => user.username == username && user.password == password);
-  
+
+  const user = await User.scope('withPassword').findOne({ where: { username } });
+
   if(!user) {
-    return res.status(400).send('invalid credentials');
+    return res.status(400).send('invalid credentials 1');
   }
 
-  if(user.profileId) {
-    user.profile = profiles.find(p => p.id == user.profileId);
+  const hasMatch = await bcrypt.compare(password, user.password);
+   
+  if(!hasMatch) {
+    return res.status(400).send('invalid credentials 2');
   }
 
-  res.json({token: user.token, user: user});
-})
+  delete user.dataValues.password;
+  const token = jwt.sign({ userId: user.id }, jwtSecret);
+  res.json({token: token, user: user});
+});
 
 /// Pública
 /// Cria credenciais
@@ -241,16 +242,16 @@ app.get('/login', (req, res) => {
 /// Regras
 ///  - username deve estar cadastrado
 ///  - senha deve ser nula
-app.post('/signup', (req, res) => {
+app.post('/signup', async (req, res) => {
   //params
-  let username = req.query.username.toLocaleLowerCase();
-  let password = req.query.password;
+  let username = req.body.username.toLocaleLowerCase();
+  let password = req.body.password;
   // apply validations
-  if(username == null || password  == null) {
+  if(!username || !password) {
     return res.status(400).send('invalid data');
   }
   
-  let user = users.find(user => user.username == username);
+  const user = await User.scope('withPassword').findOne({ where: { username } });
   if(!user) {
     return res.status(400).send('username not registered on our database');
   }
@@ -259,10 +260,11 @@ app.post('/signup', (req, res) => {
     return res.status(400).send('username already registered');
   }
   
-  user.token = 'token' + (new Date().getTime());
-  user.password = password;
-
-  res.json({token: user.token, user: user});
+  user.password = await bcrypt.hash(password, 8);
+  await user.save();
+  delete user.dataValues.password;
+  const token = jwt.sign({ userId: user.id }, jwtSecret);
+  res.json({token: token, user: user});
 })
 
 /// Auth | Admin | Manager
@@ -348,51 +350,15 @@ app.get('/exchanges', (req, res) => {
 
 /// Auth
 /// Pega usuário por token
-app.get('/user-data', (req, res) => {
-  //params
-  let token = req.query.token;
-  // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(authUser.profileId) {
-    authUser.profile = profiles.find(p => p.id == authUser.profileId);
-  }
-
-  res.json(authUser);
+app.get('/user-data', verifyJWT, async (req, res) => {
+  res.json({user: req.user});
 })
 
 /// Auth
 /// Retorna lista de lups de todos os usuários
-app.get('/lups', (req, res) => {
-  //params
-  let token = req.query.token;
-  // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  res.json(lups.map( lup => {
-    return {
-      id: lup.id,
-      description: lup.description,
-      title: lup.title,
-      author: findUserById(lup.authorId),
-      collaborators: lup.collaboratorIds.map(findUserById),
-      imageUrl: lup.imageUrl,
-    };
-  }));
+app.get('/lups', verifyJWT, async (req, res) => {
+  const lups = await Lup.findAll();
+  res.json(lups);
 })
 
 /// Auth
@@ -432,102 +398,61 @@ app.get('/users/:id', (req, res) => {
 
 /// Auth
 /// Cria/Edita perfil
-app.post('/profile', fileStorage.single('image'), (req, res) => {
+app.post('/profile', verifyJWT, fileStorage.single('image'), async (req, res) => {
   //params
-  let token = req.query.token;
-  let nickname = req.query.nickname;
+  let nickname = req.body.nickname;
   let file = req.file;
   // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
-
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
   if(!nickname) {
     return res.status(400).send('nickname is required');
   }
+  req.user.nickname = nickname;
+  if(file) { req.user.imageUrl = url + file.path; }
+  await req.user.save();
 
-  let profile = null;
-  if(authUser.profileId && profiles.some(p => p.id == authUser.profileId)) {
-    profile = profiles.find(p => p.id == authUser.profileId);
-    profile.nickname = nickname;
-    profile.imageUrl = file ? url + file.path : profile.imageUrl;
-  } else {
-    profile = {
-      id: new Date().getTime(),
-      nickname,
-      imageUrl: file ? url + file.path : null,
-    }
-    authUser.profileId = profile.id;
-    profiles.push(profile);
-  }
-  authUser.profile = profile;
-  res.json({user: authUser});
+  res.json({user: req.user});
 });
 
 /// Auth
 /// Cria lup
-app.post('/lups', fileStorage.single('image'), (req, res) => {
+app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
     //params
-    let token = req.query.token;
     let file = req.file;
-    let data = req.query; 
+    let data = req.body; 
     // apply validations
-    if(!token) {
-      return res.status(400).send('invalid token');
-    }
-  
-    let authUser = users.find(user => user.token == token);
-    if(!authUser) {
-      return res.status(400).send('invalid token');
-    }
 
   if(file == null) return res.status(400).send('image is required');
   if(data.title == null) return res.status(400).send('title is required');
   if(data.description == null) return res.status(400).send('description is required');
-  let collaboratorIds = [];
-  let collaborators = [];
-  if(data.collaboratorIds != null) {
-    if(!Array.isArray(data.collaboratorIds)) return res.status(400).send('collaboratorIds must be an array');
-    collaboratorIds = data.collaboratorIds;
-    collaborators = collaboratorIds.map(findUserById);
-    if(collaborators.some((c) => c == null)) return res.status(400).send('collaborator not found');
-  }
+  // let collaboratorIds = [];
+  // let collaborators = [];
+  // if(data.collaboratorIds != null) {
+  //   if(!Array.isArray(data.collaboratorIds)) return res.status(400).send('collaboratorIds must be an array');
+  //   collaboratorIds = data.collaboratorIds;
+  //   collaborators = collaboratorIds.map(findUserById);
+  //   if(collaborators.some((c) => c == null)) return res.status(400).send('collaborator not found');
+  // }
 
-  authUser.coins++;
-  let newLup = {
-    authorId: authUser.id,
-    id: new Date().getTime(),
+  // authUser.coins++;
+  req.user.coins++;
+  await req.user.save();
+  const lup = Lup.build({
+    authorId: req.user.id,
     title: data.title,
     description: data.description,
-    collaboratorIds,
     imageUrl: url + file.path,
-  };
-
-  lups.push(newLup);
- 
-
-  jsonFileSystem.save('database/lups.txt', lups, () => {
-    res.json({
-      author: authUser,
-      id: newLup.id,
-      title: newLup.title,
-      description: newLup.description,
-      collaborators,
-      imageUrl: newLup.imageUrl,
-    });
-  });
+  }); 
+  await lup.save();
+  res.json(lup);
 })
 
 Lup.belongsTo(User, {foreignKey: 'authorId'});
 Exchange.belongsTo(User, {foreignKey: 'buyerId'});
 Exchange.belongsTo(User, {foreignKey: 'sellerId'});
 
-database.sync({force: true}).then(() => {
+database.sync({
+  //force: true
+}).then(() => {
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');

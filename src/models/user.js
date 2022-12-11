@@ -3,12 +3,6 @@ const Sequelize = require('sequelize');
 const database = require('../utils/database');
 
 module.exports = database.define('user', {
-    // id: {
-    //     type: Sequelize.INTEGER,
-    //     autoIncrement: true,
-    //     allowNull: false,
-    //     primaryKey: true,
-    // },
     username: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -40,4 +34,11 @@ module.exports = database.define('user', {
         type: Sequelize.STRING,
         allowNull: true,
     },
+}, {
+    defaultScope: {
+        attributes: { exclude: ['password'] },
+    },
+    scopes: {
+        withPassword: {},
+    }
 });
