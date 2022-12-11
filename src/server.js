@@ -55,43 +55,27 @@ app.use((req, res, next) => {
 ///
 /// Regras
 ///  - username deve estar disponível
-app.post('/auth/user', (req, res) => {
+app.post('/admin/user', verifyJWT, async (req, res) => {
   //params
-  let token = req.query.token;
-  let username = req.query.username.toLocaleLowerCase();
+  let username = req.body.username.toLocaleLowerCase();
   // apply validations
-  if(!token) {
-    return res.status(400).send('invalid token');
-  }
 
-  let authUser = users.find(user => user.token == token);
-  if(!authUser) {
-    return res.status(400).send('invalid token');
-  }
-
-  if(!authUser.isAdmin && !authUser.isManager) {
+  if(!req.user.isAdmin && !req.user.isManager) {
     return res.status(400).send('must be admin or manager');
   }
 
   if(!username) {
     return res.status(400).send('username is required');
   }
+
+  const user = await User.findOne({ where: { username } });
   
-  let user = users.find(user => user.username == username);
   if(user) {
     return res.status(400).send('username already registered');
   }
 
-  users.push({
-    id: new Date().getTime(),
-    username: username,
-    isAdmin: false,
-    isManager: false,
-    password: null,
-    profileId: null,
-    coins: 0,
-  });
-
+  const newUser = User.build({ username });
+  await newUser.save();
   res.send('ok');
 })
 
