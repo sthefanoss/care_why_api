@@ -10,6 +10,7 @@ const User = require('./models/user');
 const Lup = require('./models/lup');
 const Exchange = require('./models/exchange');
 const jwt = require('jsonwebtoken');
+const dirname = require('../dirname');
 
 const url = 'http://carewhyapp.kinghost.net/';
 const jwtSecret = '3ad5b1cbddc52a80a89a3e22fa3a9f49';
@@ -35,7 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/uploads", express.static('../uploads'));
+app.use("/uploads", express.static(dirname+'/uploads'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -325,6 +326,7 @@ database.sync({
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');
+    console.log(dirname+'/uploads');
   });
 }).catch((error) => {
   console.error('Unable to connect to the database: ', error);
