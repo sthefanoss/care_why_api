@@ -249,9 +249,9 @@ app.post('/signup', async (req, res) => {
 /// Auth
 /// Pega usuário por token
 app.get('/exchanges', verifyJWT, async (req, res) => {
-  let configuration = {order: [['updatedAt', 'DESC']]};
+  let configuration = { order: [['updatedAt', 'DESC']] };
   if (!req.user.isManager && !req.user.isAdmin) {
-    configuration = { where: { buyerId: req.user.id } , order: [['updatedAt', 'DESC']]};
+    configuration = { where: { buyerId: req.user.id }, order: [['updatedAt', 'DESC']] };
   }
   const exchanges = await Exchange.findAll(configuration);
   let userIds = [];
@@ -273,7 +273,7 @@ app.get('/user-data', verifyJWT, async (req, res) => {
 /// Auth
 /// Retorna lista de lups de todos os usuários
 app.get('/lups', verifyJWT, async (req, res) => {
-  const lups = await Lup.findAll({order: [['updatedAt', 'DESC']]});
+  const lups = await Lup.findAll({ order: [['updatedAt', 'DESC']] });
   const userIds = removeDuplicates(lups.map((lup) => lup.authorId));
   const users = await User.findAll({ where: { id: userIds } });
   res.json({ lups, users });
@@ -314,18 +314,23 @@ app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
   if (file == null) return res.status(400).send('image is required');
   if (data.title == null) return res.status(400).send('title is required');
   if (data.description == null) return res.status(400).send('description is required');
+  try {
+    // adiciona uma moeda para o usuário que criou a Lup
+    const lup = Lup.build({
+      authorId: req.user.id,
+      title: data.title,
+      description: data.description,
+      imageUrl: url + file.path,
+    });
+    await lup.save();
 
-  // adiciona uma moeda para o usuário que criou a Lup
-  req.user.coins++;
-  await req.user.save();
-  const lup = Lup.build({
-    authorId: req.user.id,
-    title: data.title,
-    description: data.description,
-    imageUrl: url + file.path,
-  });
-  await lup.save();
-  res.json(lup);
+    req.user.coins++;
+    await req.user.save();
+
+    res.json(lup);
+  } catch (e) {
+    res.status(500).json({ e });
+  }
 });
 
 Lup.belongsTo(User, { foreignKey: 'authorId' });
