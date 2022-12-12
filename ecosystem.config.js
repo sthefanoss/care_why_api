@@ -4,6 +4,6 @@ module.exports = {
     cwd: "/home/carewhyapp/apps_nodejs/care_why_api/",
     script : "./src/server.js",
     watch: true,
-    ignore_watch: ["upload", "database"],
+    ignore_watch: ["uploads"],
   }],
 }
