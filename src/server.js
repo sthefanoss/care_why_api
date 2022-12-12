@@ -249,11 +249,11 @@ app.post('/signup', async (req, res) => {
 /// Auth
 /// Pega usuário por token
 app.get('/exchanges', verifyJWT, async (req, res) => {
-  let filter = {};
+  let configuration = {order: [['updatedAt', 'DESC']]};
   if (!req.user.isManager && !req.user.isAdmin) {
-    filter = { where: { buyerId: req.user.id } };
+    configuration = { where: { buyerId: req.user.id } , order: [['updatedAt', 'DESC']]};
   }
-  const exchanges = await Exchange.findAll(filter);
+  const exchanges = await Exchange.findAll(configuration);
   let userIds = [];
   for (index in exchanges) {
     userIds.push(exchanges[index].buyerId);
@@ -273,7 +273,7 @@ app.get('/user-data', verifyJWT, async (req, res) => {
 /// Auth
 /// Retorna lista de lups de todos os usuários
 app.get('/lups', verifyJWT, async (req, res) => {
-  const lups = await Lup.findAll();
+  const lups = await Lup.findAll({order: [['updatedAt', 'DESC']]});
   const userIds = removeDuplicates(lups.map((lup) => lup.authorId));
   const users = await User.findAll({ where: { id: userIds } });
   res.json({ lups, users });
