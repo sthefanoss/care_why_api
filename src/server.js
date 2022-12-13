@@ -120,7 +120,7 @@ app.post('/admin/set-manager', verifyJWT, async (req, res) => {
 ///
 /// Regras
 ///  - não pode ter criado perfil
-app.delete('/admin/user', verifyJWT, async (req, res) => {
+app.post('/admin/delete-user', verifyJWT, async (req, res) => {
   //params
   let username = req.body.username?.toLocaleLowerCase();
   // apply validations
