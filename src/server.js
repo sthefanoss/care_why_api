@@ -1,5 +1,5 @@
+require('dotenv').config();
 const express = require('express');
-
 const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs")
 const app = express();
@@ -12,9 +12,6 @@ const Exchange = require('./models/exchange');
 const jwt = require('jsonwebtoken');
 const dirname = require('../dirname');
 
-const url = 'http://carewhyapp.kinghost.net/';
-const jwtSecret = '3ad5b1cbddc52a80a89a3e22fa3a9f49';
-
 const removeDuplicates = array => {
   return [...new Set(array)];
 }
@@ -23,7 +20,7 @@ const verifyJWT = async (req, res, next) => {
   const token = req.headers['token'];
   if (!token) return res.status(401).json({ message: 'No token provided.' });
 
-  jwt.verify(token, jwtSecret, async (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
     if (err) return res.status(500).json({ message: 'Failed to authenticate token.' });
 
     const user = await User.findOne({ where: { id: decoded.userId } });
@@ -211,7 +208,7 @@ app.get('/login', async (req, res) => {
   }
 
   delete user.dataValues.password;
-  const token = jwt.sign({ userId: user.id }, jwtSecret);
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
   res.json({ token: token, user: user });
 });
 
@@ -242,7 +239,7 @@ app.post('/signup', async (req, res) => {
   user.password = await bcrypt.hash(password, 8);
   await user.save();
   delete user.dataValues.password;
-  const token = jwt.sign({ userId: user.id }, jwtSecret);
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
   res.json({ token: token, user: user });
 });
 
@@ -297,7 +294,7 @@ app.post('/profile', verifyJWT, fileStorage.single('image'), async (req, res) =>
     return res.status(400).send('nickname is required');
   }
   req.user.nickname = nickname;
-  if (file) { req.user.imageUrl = url + file.path; }
+  if (file) { req.user.imageUrl = process.env.ASSET_URL + file.path; }
   await req.user.save();
 
   res.json({ user: req.user });
@@ -321,7 +318,7 @@ app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
       authorId: req.user.id,
       title: data.title,
       description: data.description,
-      imageUrl: url + file.path,
+      imageUrl: process.env.ASSET_URL + file.path,
     });
     await lup.save();
 
@@ -344,7 +341,6 @@ database.sync({
   console.log('Connection has been established successfully.');
   app.listen(port, () => {
     console.log('Connection has been established successfully 2.');
-    console.log(dirname + '/uploads');
   });
 }).catch((error) => {
   console.error('Unable to connect to the database: ', error);
