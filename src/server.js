@@ -328,7 +328,7 @@ app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
     req.user.coins++;
     await req.user.save();
 
-    res.json(lup);
+    res.json({lup, author: req.user});
   } catch (e) {
     res.status(500).json({ e });
   }
