@@ -1,4 +1,7 @@
 require('dotenv').config();
+const dirname = require('../dirname');
+process.chdir(dirname);
+
 const express = require('express');
 const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs")
@@ -10,7 +13,7 @@ const User = require('./models/user');
 const Lup = require('./models/lup');
 const Exchange = require('./models/exchange');
 const jwt = require('jsonwebtoken');
-const dirname = require('../dirname');
+
 
 const removeDuplicates = array => {
   return [...new Set(array)];
