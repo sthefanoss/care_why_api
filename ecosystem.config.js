@@ -3,6 +3,6 @@ module.exports = {
     name   : "care_why_api",
     script : "./src/server.js",
     watch: true,
-    ignore_watch: ["upload", "database"],
+    ignore_watch: ["uploads"],
   }],
 }
