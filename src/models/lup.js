@@ -9,8 +9,8 @@ module.exports = database.define('lup', {
         type: Sequelize.STRING,
         allowNull: true,
     },
-    description: {
-        type: Sequelize.TEXT('medium'),
+    typeId: {
+        type: Sequelize.INTEGER,
         allowNull: false,
     },
     imageUrl: {

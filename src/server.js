@@ -314,13 +314,13 @@ app.post('/lups', verifyJWT, fileStorage.single('image'), async (req, res) => {
     // apply validations
     if (file == null) return res.status(400).send('image is required');
     if (data.title == null) return res.status(400).send('title is required');
-    if (data.description == null) return res.status(400).send('description is required');
+    if (data.typeId == null) return res.status(400).send('typeId is required');
 
     // adiciona uma moeda para o usuário que criou a Lup
     const lup = Lup.build({
       authorId: req.user.id,
       title: data.title,
-      description: data.description,
+      typeId: data.typeId,
       imageUrl: process.env.ASSET_URL + file.path,
     });
     await lup.save();
